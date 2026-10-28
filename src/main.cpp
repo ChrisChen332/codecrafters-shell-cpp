@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <unordered_set>
+
 
 int main() {
   // Flush after every std::cout / std:cerr
@@ -11,12 +13,21 @@ int main() {
     std::cout << "$ ";
     std:: string input;
     std::getline(std::cin, input);
-    if (input == "exit") {
-      break;
+    std::unordered_set<std::string> commands = {"echo", "exit", "type"};
+    std::string command = input.substr(0, input.find(' '));
+
+    if (commands.contains(command)){
+      if (command == "exit") {
+        break;
+      }
+      else if (command == "echo") {
+        std::cout << input.substr(5) << std::endl;
+      }
+      else{
+        std::cout << command << "is a shell builtin" << std::endl;
+      }
     }
-    else if (input.substr(0,4) == "echo") {
-      std::cout << input.substr(5) << std::endl;
-    }
+
     else {
       std::cout << input << ": command not found"<< std::endl;
     }
