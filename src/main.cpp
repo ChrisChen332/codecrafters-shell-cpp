@@ -24,7 +24,7 @@ int main() {
         std::cout << input.substr(5) << std::endl;
       }
       else{
-        std::cout << command << "is a shell builtin" << std::endl;
+        std::cout << input.substr(5) << " is a shell builtin" << std::endl;
       }
     }
 
