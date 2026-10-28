@@ -24,10 +24,15 @@ int main() {
         std::cout << input.substr(5) << std::endl;
       }
       else{
-        std::cout << input.substr(5) << " is a shell builtin" << std::endl;
+        if (commands.contains(input.substr(5))){
+          std::cout << input.substr(5) << " is a shell builtin" << std::endl;
+        }    
+        else {
+          std::cout << input << ": command not found"<< std::endl;
+        }
+        
       }
     }
-
     else {
       std::cout << input << ": command not found"<< std::endl;
     }
