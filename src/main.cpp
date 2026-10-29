@@ -27,7 +27,7 @@ int main() {
       }
       else{
         std::string target = input.size() > 5 ? input.substr(5) : "";
-
+        std::boolean find = false;
         // Step 1: Check built-in commands
         if (commands.contains(target)) {
             std::cout << target << " is a shell builtin\n";
@@ -41,10 +41,12 @@ int main() {
             std::filesystem::path fullPath = std::filesystem:: path(directory) / target;
             if (std::filesystem::is_regular_file(fullPath) && access(fullPath.c_str(), X_OK) == 0){
               std::cout << target << " is " << fullPath << std::endl;
+              find = true
             }
-            else{
-              std:: cout << target << ": not found" << std::endl;
-            }
+
+          }
+          if (find == false){
+            std:: cout << target << ": not found" << std::endl;
           }
         }
       }
