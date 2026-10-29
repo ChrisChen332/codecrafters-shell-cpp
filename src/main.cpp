@@ -10,6 +10,7 @@ int main() {
 
   // TODO: Uncomment the code below to pass the first stage
   while (true){
+    const char* path = std::getenv("PATH");
     std::cout << "$ ";
     std:: string input;
     std::getline(std::cin, input);
@@ -26,7 +27,7 @@ int main() {
       else{
         if (commands.contains(input.substr(5))){
           std::cout << input.substr(5) << " is a shell builtin" << std::endl;
-        }    
+        }
         else {
           std::cout << input.substr(5) << ": not found"<< std::endl;
         }
