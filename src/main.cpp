@@ -27,7 +27,7 @@ int main() {
       }
       else{
         std::string target = input.size() > 5 ? input.substr(5) : "";
-        std::boolean find = false;
+        bool find = false;
         // Step 1: Check built-in commands
         if (commands.contains(target)) {
             std::cout << target << " is a shell builtin\n";
