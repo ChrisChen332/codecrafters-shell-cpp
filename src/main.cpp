@@ -1,8 +1,9 @@
 #include <iostream>
 #include <string>
 #include <unordered_set>
-
-
+#include <sstream>
+#include <unistd.h>
+#include <filesystem>
 int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
@@ -25,13 +26,27 @@ int main() {
         std::cout << input.substr(5) << std::endl;
       }
       else{
-        if (commands.contains(input.substr(5))){
-          std::cout << input.substr(5) << " is a shell builtin" << std::endl;
+        std::string target = input.size() > 5 ? input.substr(5) : "";
+
+        // Step 1: Check built-in commands
+        if (commands.contains(target)) {
+            std::cout << target << " is a shell builtin\n";
         }
-        else {
-          std::cout << input.substr(5) << ": not found"<< std::endl;
+        else{
+          const char* path = std::getenv("PATH");
+          std::string pathString = path != nullptr ? path : "";
+          std::stringstream ss(pathString);
+          std::string directory;
+          while (std::getline(ss, directory, ':')) {
+            std::filesystem::path fullPath = std::filesystem:: path(directory) / target;
+            if (std::filesystem::is_regular_file(fullPath) && access(fullPath.c_str(), X_OK)){
+              std::cout << target << " is " << fullPath << std::endl;
+            }
+            else{
+              std:: cout << target << ": not found" << std::endl;
+            }
+          }
         }
-        
       }
     }
     else {
