@@ -40,8 +40,9 @@ int main() {
           while (std::getline(ss, directory, ':')) {
             std::filesystem::path fullPath = std::filesystem:: path(directory) / target;
             if (std::filesystem::is_regular_file(fullPath) && access(fullPath.c_str(), X_OK) == 0){
-              std::cout << target << " is " << fullPath << std::endl;
+              std::cout << target << " is " << fullPath.string() << std::endl;
               find = true;
+              break;
             }
 
           }
