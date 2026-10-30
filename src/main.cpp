@@ -14,7 +14,6 @@ int main() {
 
   // TODO: Uncomment the code below to pass the first stage
   while (true){
-    const char* path = std::getenv("PATH");
     std::cout << "$ ";
     std:: string input;
     std::unordered_set<std::string> commands = {"echo", "exit", "type"};
