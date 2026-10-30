@@ -30,12 +30,15 @@ int main() {
     std::istringstream stream(input);
     std::vector<std::string> arguments;
     std::string word;
-    std::string command = arguments[0];
+
 
     while (stream >> word) {
       arguments.push_back(word);
     }
-
+    if (arguments.empty()) {
+    continue;
+    } 
+    std::string command = arguments[0];
     if (commands.contains(command)){
       if (command == "exit") {
         break;
