@@ -65,6 +65,7 @@ int main() {
       }
     }
     else {
+      bool find = false;
       std::filesystem::path fullPath;
       while (std::getline(ss, directory, ':')) {
         fullpath = std::filesystem:: path(directory) / target;
