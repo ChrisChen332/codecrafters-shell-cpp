@@ -50,7 +50,7 @@ int main() {
         }
         else{
           while (std::getline(ss, directory, ':')) {
-            std::filesystem::path fullPath = std::filesystem:: path(directory) / target;
+            std::filesystem::path fullPath = std::filesystem:: path(directory);
             if (std::filesystem::is_regular_file(fullPath) && access(fullPath.c_str(), X_OK) == 0){
               std::cout << target << " is " << fullPath.string() << std::endl;
               find = true;
@@ -67,10 +67,9 @@ int main() {
       bool find = false;
       std::filesystem::path fullPath;
       while (std::getline(ss, directory, ':')) {
-        fullPath = std::filesystem:: path(directory) / target;
+        fullPath = std::filesystem:: path(directory) / command;
 
         if (std::filesystem::is_regular_file(fullPath) && access(fullPath.c_str(), X_OK) == 0){
-          std::cout << target << " is " << fullPath.string() << std::endl;
           find = true;
           break;
         }
