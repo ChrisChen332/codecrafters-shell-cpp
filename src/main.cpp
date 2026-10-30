@@ -32,7 +32,7 @@ int main() {
     std::string command = arguments[0];
 
     while (stream >> word) {
-      arguments.push_back(word)
+      arguments.push_back(word);
     }
 
     if (commands.contains(command)){
