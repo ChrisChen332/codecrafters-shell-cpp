@@ -7,6 +7,8 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <vector>
+#include <cstdlib>  // std::getenv
+#include <cstdio>   // perror
 int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
@@ -50,7 +52,7 @@ int main() {
         }
         else{
           while (std::getline(ss, directory, ':')) {
-            std::filesystem::path fullPath = std::filesystem:: path(directory);
+            std::filesystem::path fullPath = std::filesystem:: path(directory)/target;
             if (std::filesystem::is_regular_file(fullPath) && access(fullPath.c_str(), X_OK) == 0){
               std::cout << target << " is " << fullPath.string() << std::endl;
               find = true;
