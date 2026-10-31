@@ -14,7 +14,6 @@ int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
 
-  // TODO: Uncomment the code below to pass the first stage
   while (true){
     std::cout << "$ ";
     std:: string input;
@@ -31,7 +30,7 @@ int main() {
     std::vector<std::string> arguments;
     std::string word;
 
-
+    //push to create a indexable argument vector value
     while (stream >> word) {
       arguments.push_back(word);
     }
@@ -39,6 +38,8 @@ int main() {
     continue;
     } 
     std::string command = arguments[0];
+
+    //Build-in Command
     if (commands.contains(command)){
       if (command == "exit") {
         break;
@@ -46,6 +47,7 @@ int main() {
       else if (command == "echo") {
         std::cout << input.substr(5) << std::endl;
       }
+      //Command "type"
       else{
         std::string target = input.size() > 5 ? input.substr(5) : "";
         bool find = false;
@@ -68,6 +70,7 @@ int main() {
         }
       }
     }
+    //Not build-in command try excution
     else {
       bool find = false;
       std::filesystem::path fullPath;
