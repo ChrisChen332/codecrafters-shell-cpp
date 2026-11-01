@@ -48,7 +48,7 @@ int main() {
         std::cout << input.substr(5) << std::endl;
       }
       else if (command == "pwd"){
-        std::cout << std::filesystem::current_path().string << std::endl;
+        std::cout << std::filesystem::current_path().string() << std::endl;
       }
       //Command "type"
       else {
