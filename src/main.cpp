@@ -47,8 +47,11 @@ int main() {
       else if (command == "echo") {
         std::cout << input.substr(5) << std::endl;
       }
+      else if (command == "pwd"){
+        std::cout << std::filesystem::current_path() << std::enl;
+      }
       //Command "type"
-      else{
+      else {
         std::string target = input.size() > 5 ? input.substr(5) : "";
         bool find = false;
         // Step 1: Check built-in commands
