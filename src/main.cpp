@@ -17,7 +17,7 @@ int main() {
   while (true){
     std::cout << "$ ";
     std:: string input;
-    std::unordered_set<std::string> commands = {"echo", "exit", "type"};
+    std::unordered_set<std::string> commands = {"echo", "exit", "type","pwd"};
 
     
     const char* path = std::getenv("PATH");
