@@ -17,7 +17,7 @@ int main() {
   while (true){
     std::cout << "$ ";
     std:: string input;
-    std::unordered_set<std::string> commands = {"echo", "exit", "type","pwd"};
+    std::unordered_set<std::string> commands = {"echo", "exit", "type", "pwd", "cd"};
 
     
     const char* path = std::getenv("PATH");
@@ -49,6 +49,16 @@ int main() {
       }
       else if (command == "pwd"){
         std::cout << std::filesystem::current_path().string() << std::endl;
+      }
+      else if (command == "cd"){
+        std::string target = arguments.size() > 1 ? arguments[1] : "";
+        std::error_code ec;
+        std::filesystem::current_path(target, ec);
+
+        if (ec) {
+            std::cout << "cd: " << target
+                      << ": No such file or directory\n";
+        }
       }
       //Command "type"
       else {
