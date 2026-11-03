@@ -54,7 +54,7 @@ int main() {
         std::string target = arguments.size() > 1 ? arguments[1] : "";
         std::error_code ec;
         if (target == "~"){
-          const char* home = std::getenv("HOME")
+          const char* home = std::getenv("HOME");
           std::filesystem::current_path(home, ec);         
         }else{
           std::filesystem::current_path(target, ec);
