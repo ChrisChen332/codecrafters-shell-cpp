@@ -40,7 +40,7 @@ int main() {
       else if ((std:: isspace(c) && !inSingleQuotes)){
         if (argumentStarted){
           arguments.push_back(current);
-          current.clear()
+          current.clear();
           argumentStarted = false;
         }
       }
