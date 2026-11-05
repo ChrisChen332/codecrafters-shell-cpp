@@ -70,7 +70,7 @@ int main() {
           }
           std::cout << arguments[i];
         }
-        std::endl;
+        std::cout << std:: endl;
       }
       else if (command == "pwd"){
         std::cout << std::filesystem::current_path().string() << std::endl;
