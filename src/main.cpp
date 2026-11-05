@@ -26,6 +26,7 @@ int main() {
     std::string directory;
 
     std::getline(std::cin, input);    
+
     std::vector<std::string> arguments;
     std::string current;
     
@@ -48,6 +49,9 @@ int main() {
         current += c;
         argumentStarted = true;
       }
+    }
+    if (argumentStarted) {
+    arguments.push_back(current);
     }
     if (arguments.empty()) {
     continue;
