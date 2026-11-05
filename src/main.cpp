@@ -26,17 +26,29 @@ int main() {
     std::string directory;
 
     std::getline(std::cin, input);    
-    std::istringstream stream(input);
     std::vector<std::string> arguments;
-    std::string word;
+    std::string current;
+    
+    bool inSingleQuotes = false;
+    bool argumentStarted = false;
 
-    //push to create a indexable argument vector value
-    while (stream >> word) {
-      arguments.push_back(word);
+    for (char c : input){
+      if (c == '\''){
+        inSingleQuotes = !inSingleQuotes;
+        argumentStarted = true;
+      }
+      else if ((std:: isspace(c) && !inSingleQuotes)){
+        if (argumentStarted){
+          arguments.push_back(current);
+          current.clear()
+          argumentStarted = false;
+        }
+      }
+      else{
+        current += c;
+        argumentStarted = true;
+      }
     }
-    if (arguments.empty()) {
-    continue;
-    } 
     std::string command = arguments[0];
 
     //Build-in Command
@@ -45,7 +57,7 @@ int main() {
         break;
       }
       else if (command == "echo") {
-        std::cout << input.substr(5) << std::endl;
+        std::cout << arguments[1]<< std::endl;
       }
       else if (command == "pwd"){
         std::cout << std::filesystem::current_path().string() << std::endl;
