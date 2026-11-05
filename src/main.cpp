@@ -49,6 +49,9 @@ int main() {
         argumentStarted = true;
       }
     }
+    if (arguments.empty()) {
+    continue;
+    }
     std::string command = arguments[0];
 
     //Build-in Command
@@ -57,7 +60,12 @@ int main() {
         break;
       }
       else if (command == "echo") {
-        std::cout << arguments[1]<< std::endl;
+        for (size_t i = 1; i < arguments.size(); i++){
+          if (i > 1){
+            std::cout << " ";
+          }
+          std::cout << arguments[i];
+        }
       }
       else if (command == "pwd"){
         std::cout << std::filesystem::current_path().string() << std::endl;
