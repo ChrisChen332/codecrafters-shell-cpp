@@ -59,7 +59,7 @@ int main() {
           continue;
         }
         current += c;
-        isbackslashstart = false
+        isbackslashstart = false;
         argumentStarted = true;
       }
     }
