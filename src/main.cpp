@@ -31,14 +31,19 @@ int main() {
     std::string current;
     
     bool inSingleQuotes = false;
+    bool inDoubleQuotes = false;
     bool argumentStarted = false;
 
     for (char c : input){
-      if (c == '\''){
+      if (c == '\'' && !inDoubleQuotes){
         inSingleQuotes = !inSingleQuotes;
         argumentStarted = true;
       }
-      else if ((std:: isspace(c) && !inSingleQuotes)){
+      else if (c == '\"'){
+        inDoubleQuotes = !inDoubleQuotes;
+        argumentStarted = true;
+      }
+      else if ((std:: isspace(c) && !inSingleQuotes && !inDoubleQuotes)){
         if (argumentStarted){
           arguments.push_back(current);
           current.clear();
