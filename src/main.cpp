@@ -36,14 +36,14 @@ int main() {
     bool isbackslash = false;
     bool skipspace = false;
     for (char c : input){
-      if (c == '\'' && !inDoubleQuotes){
+      if (c == '\'' && !inDoubleQuotes && !isbackslash){
         inSingleQuotes = !inSingleQuotes;
         argumentStarted = true;
       }
       else if (c == '\\'){
         isbackslash = true;
       }
-      else if (c == '\"'){
+      else if (c == '\"' && !isbackslash){
         inDoubleQuotes = !inDoubleQuotes;
         argumentStarted = true;
       }
