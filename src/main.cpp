@@ -57,7 +57,7 @@ int main() {
       else{
         if (std:: isspace(c) && isbackslash && !skipspace){
           current += c;
-          skipspace = true
+          skipspace = true;
           continue;
         }
         isbackslash = false;
