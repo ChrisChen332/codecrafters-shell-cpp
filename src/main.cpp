@@ -34,13 +34,19 @@ int main() {
     bool inDoubleQuotes = false;
     bool argumentStarted = false;
     bool isbackslash = false;
-    bool skipspace = false;
+  
     for (char c : input){
+      if (isbackslash) {
+        current += c;
+        argumentStarted = true;
+        isbackslash = false;
+        continue;
+      }
       if (c == '\'' && !inDoubleQuotes && !isbackslash){
         inSingleQuotes = !inSingleQuotes;
         argumentStarted = true;
       }
-      else if (c == '\\'){
+      else if (c == '\\' && !inDoubleQuotes && !inSingleQuotes){
         isbackslash = true;
       }
       else if (c == '\"' && !isbackslash){
@@ -55,12 +61,6 @@ int main() {
         }
       }
       else{
-        if (std:: isspace(c) && isbackslash && !skipspace){
-          current += c;
-          skipspace = true;
-          continue;
-        }
-        isbackslash = false;
         current += c;
         argumentStarted = true;
       }
