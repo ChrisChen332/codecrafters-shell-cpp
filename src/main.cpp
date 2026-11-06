@@ -33,17 +33,21 @@ int main() {
     bool inSingleQuotes = false;
     bool inDoubleQuotes = false;
     bool argumentStarted = false;
+    bool isbackslashstart = false;
 
     for (char c : input){
       if (c == '\'' && !inDoubleQuotes){
         inSingleQuotes = !inSingleQuotes;
         argumentStarted = true;
       }
+      else if (c == '\\'){
+        isbackslashstart = true;
+      }
       else if (c == '\"'){
         inDoubleQuotes = !inDoubleQuotes;
         argumentStarted = true;
       }
-      else if ((std:: isspace(c) && !inSingleQuotes && !inDoubleQuotes)){
+      else if ((std:: isspace(c) && !inSingleQuotes && !inDoubleQuotes && !isbackslashstart)){
         if (argumentStarted){
           arguments.push_back(current);
           current.clear();
@@ -51,16 +55,22 @@ int main() {
         }
       }
       else{
+        if (std:: isspace(c) && isbackslashstart){
+          continue;
+        }
         current += c;
+        isbackslashstart = false
         argumentStarted = true;
       }
     }
     if (argumentStarted) {
     arguments.push_back(current);
     }
+
     if (arguments.empty()) {
     continue;
     }
+    
     std::string command = arguments[0];
 
     //Build-in Command
