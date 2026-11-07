@@ -49,7 +49,7 @@ int main() {
       else if (c == '\\' && !inDoubleQuotes && !inSingleQuotes){
         isbackslash = true;
       }
-      else if (c == '\"' && !isbackslash){
+      else if (c == '\"' && !isbackslash && !inSingleQuotes){
         inDoubleQuotes = !inDoubleQuotes;
         argumentStarted = true;
       }
