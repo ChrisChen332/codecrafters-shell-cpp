@@ -46,8 +46,14 @@ int main() {
         inSingleQuotes = !inSingleQuotes;
         argumentStarted = true;
       }
-      else if (c == '\\' && !inDoubleQuotes && !inSingleQuotes){
-        isbackslash = true;
+      else if (c == '\\'  && !inSingleQuotes){
+        if (!inDoubleQuotes){
+          isbackslash = true;
+        }
+        else if (c == '\"' || c == '\\' || c == '\$' || c == '\`' || c == '\n'){
+          isbackslash = true;
+        }
+      
       }
       else if (c == '\"' && !isbackslash && !inSingleQuotes){
         inDoubleQuotes = !inDoubleQuotes;
