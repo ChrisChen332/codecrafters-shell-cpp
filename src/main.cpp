@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <sstream>
 #include <unistd.h>
+#include <fcntl.h>
 #include <filesystem>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -79,13 +80,41 @@ int main() {
     continue;
     }
     
+    bool redirectOutput = false;
+    std::string outputFile;
+
+    for (size_t i = 0; i < arguments.size(); i++){
+      if (arguments[i] == '>' || arguments[i] == '1>'){
+        redirectOutput = true;
+
+        if (i + 1 < arguments.size()){
+          outputFile = arguments[i + 1];
+        }
+
+        arguments.resize(i)
+        break;
+      }
+    }
     std::string command = arguments[0];
 
     //Build-in Command
+
     if (commands.contains(command)){
+      std::ofstream outFile;
+      std::streambuf* originalBuffer = nullptr;      
+      if (redirectOutput == true){
+        outFile.open(outputFile, std::ios::out | std::ios::trunc);
+
+        if (!outFile) {
+            std::cerr << "Cannot open output file: " << outputFile << "\n";
+            continue;
+        }
+
+        originalBuffer = std::cout.rdbuf(outFile.rdbuf());
+      }
       if (command == "exit") {
         break;
-      }
+      } 
       else if (command == "echo") {
         for (size_t i = 1; i < arguments.size(); i++){
           if (i > 1){
@@ -136,6 +165,12 @@ int main() {
           }
         }
       }
+
+      if (originalBuffer != nullptr) {
+        std::cout.flush();
+        std::cout.rdbuf(originalBuffer);
+        outFile.close();
+      }
     }
     //Not build-in command try excution
     else {
@@ -165,11 +200,38 @@ int main() {
         pid_t  pid = fork();
 
         if (pid == 0){
-        execv(fullPath.c_str(), argv.data());
+          if (redirectOutput){
 
-        // Only runs if execv fails
-        perror("execv");
-        _exit(127);
+            // Open the output file for writing.
+            // Create it if missing, overwrite if it exists.
+            int fd = open(
+                outputFile.c_str(),
+                O_WRONLY | O_CREAT | O_TRUNC,
+                0644
+            );
+
+            // Stop if opening the file failed.
+            if (fd == -1) {
+                perror("open");
+                _exit(1);
+            }
+
+            // Make standard output (FD 1) refer to the file.
+            if (dup2(fd, STDOUT_FILENO) == -1) {
+                perror("dup2");
+                close(fd);
+                _exit(1);
+            }
+
+            // The extra descriptor is no longer needed.
+            // FD 1 remains connected to the file.
+            close(fd);
+          }
+          execv(fullPath.c_str(), argv.data());
+
+          // Only runs if execv fails
+          perror("execv");
+          _exit(127);
         }
         else if (pid > 0){
           waitpid(pid, nullptr, 0);
