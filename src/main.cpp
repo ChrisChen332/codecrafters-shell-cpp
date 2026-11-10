@@ -91,7 +91,7 @@ int main() {
           outputFile = arguments[i + 1];
         }
 
-        arguments.resize(i)
+        arguments.resize(i);
         break;
       }
     }
