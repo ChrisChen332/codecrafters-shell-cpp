@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <unordered_set>
 #include <sstream>
@@ -51,7 +52,7 @@ int main() {
         if (!inDoubleQuotes){
           isbackslash = true;
         }
-        else if (c == '\"' || c == '\\' || c == '\$' || c == '\`' || c == '\n'){
+        else if (c == '\"' || c == '\\' || c == '$' || c == '`' || c == '\n'){
           isbackslash = true;
         }
       
@@ -84,7 +85,7 @@ int main() {
     std::string outputFile;
 
     for (size_t i = 0; i < arguments.size(); i++){
-      if (arguments[i] == '>' || arguments[i] == '1>'){
+      if (arguments[i] == ">" || arguments[i] == "1>"){
         redirectOutput = true;
 
         if (i + 1 < arguments.size()){
