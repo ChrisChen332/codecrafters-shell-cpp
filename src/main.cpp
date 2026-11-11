@@ -1,247 +1,353 @@
+
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <unordered_set>
+#include <vector>
 #include <sstream>
+#include <unordered_set>
+#include <optional>
+#include <filesystem>
+#include <cstdlib>
+#include <cstdio>
+#include <cctype>
 #include <unistd.h>
 #include <fcntl.h>
-#include <filesystem>
 #include <sys/wait.h>
-#include <sys/stat.h>
-#include <vector>
-#include <cstdlib>  // std::getenv
-#include <cstdio>   // perror
+
+namespace fs = std::filesystem;
+
+// Holds the result of parsing one command line.
+struct Command {
+  std::vector<std::string> arguments;
+  std::optional<std::string> outputFile;
+  std::string error;
+};
+
+const std::unordered_set<std::string> builtins = {
+  "echo", "exit", "type", "pwd", "cd"
+};
+
+// Parse arguments, quotes, escapes, and stdout redirection.
+Command parseCommand(const std::string& input) {
+  Command result;
+
+  struct Token {
+      std::string text;
+      bool isRedirect = false;
+  };
+
+  std::vector<Token> tokens;
+  std::string current;
+
+  bool started = false;
+  bool singleQuote = false;
+  bool doubleQuote = false;
+
+  auto finishToken = [&]() {
+      if (started) {
+          tokens.push_back({current, false});
+          current.clear();
+          started = false;
+      }
+  };
+
+  for (size_t i = 0; i < input.size(); ++i) {
+      char c = input[i];
+
+      // Single quotes preserve everything literally.
+      if (singleQuote) {
+          if (c == '\'') {
+              singleQuote = false;
+          } else {
+              current += c;
+          }
+          continue;
+      }
+
+      // Double quotes preserve spaces but allow certain escapes.
+      if (doubleQuote) {
+          if (c == '"') {
+              doubleQuote = false;
+          } else if (c == '\\' && i + 1 < input.size()) {
+              char next = input[i + 1];
+
+              if (next == '"' || next == '\\' ||
+                  next == '$' || next == '`') {
+                  current += next;
+                  ++i;
+              } else {
+                  current += c;
+              }
+          } else {
+              current += c;
+          }
+          continue;
+      }
+
+      // Outside quotes, backslash escapes the next character.
+      if (c == '\\' && i + 1 < input.size()) {
+          current += input[++i];
+          started = true;
+      }
+      else if (c == '\'') {
+          singleQuote = true;
+          started = true;
+      }
+      else if (c == '"') {
+          doubleQuote = true;
+          started = true;
+      }
+      else if (std::isspace(static_cast<unsigned char>(c))) {
+          finishToken();
+      }
+      else if (c == '>' ||
+                (c == '1' && i + 1 < input.size() &&
+                input[i + 1] == '>' && !started)) {
+          finishToken();
+
+          if (c == '1') {
+              ++i;
+          }
+
+          tokens.push_back({">", true});
+      }
+      else {
+          current += c;
+          started = true;
+      }
+  }
+
+  if (singleQuote || doubleQuote) {
+      result.error = "Unclosed quote";
+      return result;
+  }
+
+  finishToken();
+
+  // Separate command arguments from redirection syntax.
+  for (size_t i = 0; i < tokens.size(); ++i) {
+      if (tokens[i].isRedirect) {
+          if (i + 1 >= tokens.size() ||
+              tokens[i + 1].isRedirect) {
+              result.error = "Missing output filename";
+              return result;
+          }
+
+          result.outputFile = tokens[++i].text;
+      }
+      else {
+          result.arguments.push_back(tokens[i].text);
+      }
+  }
+
+  return result;
+}
+
+// Search PATH and return the first executable match.
+std::optional<fs::path> findExecutable(
+  const std::string& name
+) {
+  const char* rawPath = std::getenv("PATH");
+
+  if (rawPath == nullptr) {
+      return std::nullopt;
+  }
+
+  std::stringstream paths(rawPath);
+  std::string directory;
+
+  while (std::getline(paths, directory, ':')) {
+      fs::path candidate =
+          fs::path(directory.empty() ? "." : directory) / name;
+
+      std::error_code ec;
+
+      if (fs::is_regular_file(candidate, ec) &&
+          access(candidate.c_str(), X_OK) == 0) {
+          return candidate;
+      }
+  }
+
+  return std::nullopt;
+}
+
+// Execute a builtin in the parent shell process.
+void executeBuiltin(const Command& cmd) {
+  const auto& args = cmd.arguments;
+  const std::string& name = args[0];
+
+  std::ofstream file;
+  std::ostream* output = &std::cout;
+
+  // Choose an output destination for this command only.
+  if (cmd.outputFile) {
+      file.open(*cmd.outputFile, std::ios::out | std::ios::trunc);
+
+      if (!file) {
+          std::cerr << "Cannot open output file: "
+                    << *cmd.outputFile << "\n";
+          return;
+      }
+
+      output = &file;
+  }
+
+  if (name == "echo") {
+      for (size_t i = 1; i < args.size(); ++i) {
+          if (i > 1) {
+              *output << " ";
+          }
+
+          *output << args[i];
+      }
+
+      *output << "\n";
+  }
+  else if (name == "pwd") {
+      *output << fs::current_path().string() << "\n";
+  }
+  else if (name == "cd") {
+      std::string target = args.size() > 1 ? args[1] : "~";
+
+      if (target == "~") {
+          const char* home = std::getenv("HOME");
+
+          if (home == nullptr) {
+              std::cerr << "cd: HOME not set\n";
+              return;
+          }
+
+          target = home;
+      }
+
+      std::error_code ec;
+      fs::current_path(target, ec);
+
+      if (ec) {
+          std::cerr << "cd: " << target
+                    << ": No such file or directory\n";
+      }
+  }
+  else if (name == "type") {
+      if (args.size() < 2) {
+          return;
+      }
+
+      const std::string& target = args[1];
+
+      if (builtins.contains(target)) {
+          *output << target << " is a shell builtin\n";
+      }
+      else {
+          auto path = findExecutable(target);
+
+          if (path) {
+              *output << target << " is "
+                      << path->string() << "\n";
+          }
+          else {
+              *output << target << ": not found\n";
+          }
+      }
+  }
+}
+
+// Run an external executable in a child process.
+void executeExternal(const Command& cmd) {
+  std::string name = cmd.arguments[0];
+
+  auto fullPath = findExecutable(name);
+
+  if (!fullPath) {
+      std::cerr << name << ": command not found\n";
+      return;
+  }
+
+  // execv expects an array of C-style string pointers.
+  std::vector<std::string> args = cmd.arguments;
+  std::vector<char*> argv;
+
+  for (auto& arg : args) {
+      argv.push_back(arg.data());
+  }
+
+  argv.push_back(nullptr);
+
+  pid_t pid = fork();
+
+  if (pid == 0) {
+      // Child: redirect stdout before replacing the process.
+      if (cmd.outputFile) {
+          int fd = open(
+              cmd.outputFile->c_str(),
+              O_WRONLY | O_CREAT | O_TRUNC,
+              0644
+          );
+
+          if (fd == -1) {
+              perror("open");
+              _exit(1);
+          }
+
+          if (dup2(fd, STDOUT_FILENO) == -1) {
+              perror("dup2");
+              close(fd);
+              _exit(1);
+          }
+
+          close(fd);
+      }
+
+      execv(fullPath->c_str(), argv.data());
+
+      perror("execv");
+      _exit(127);
+  }
+  else if (pid > 0) {
+      // Parent waits for the foreground command.
+      waitpid(pid, nullptr, 0);
+  }
+  else {
+      perror("fork");
+  }
+}
+
 int main() {
-  // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
 
-  while (true){
-    std::cout << "$ ";
-    std:: string input;
-    std::unordered_set<std::string> commands = {"echo", "exit", "type", "pwd", "cd"};
+  while (true) {
+      std::cout << "$ ";
 
-    
-    const char* path = std::getenv("PATH");
-    std::string pathString = path != nullptr ? path : "";
-    std::stringstream ss(pathString);
-    std::string directory;
+      std::string input;
 
-    std::getline(std::cin, input);    
-
-    std::vector<std::string> arguments;
-    std::string current;
-    
-    bool inSingleQuotes = false;
-    bool inDoubleQuotes = false;
-    bool argumentStarted = false;
-    bool isbackslash = false;
-  
-    for (char c : input){
-      if (isbackslash) {
-        current += c;
-        argumentStarted = true;
-        isbackslash = false;
-        continue;
-      }
-      if (c == '\'' && !inDoubleQuotes && !isbackslash){
-        inSingleQuotes = !inSingleQuotes;
-        argumentStarted = true;
-      }
-      else if (c == '\\'  && !inSingleQuotes){
-        if (!inDoubleQuotes){
-          isbackslash = true;
-        }
-        else if (c == '\"' || c == '\\' || c == '$' || c == '`' || c == '\n'){
-          isbackslash = true;
-        }
-      
-      }
-      else if (c == '\"' && !isbackslash && !inSingleQuotes){
-        inDoubleQuotes = !inDoubleQuotes;
-        argumentStarted = true;
-      }
-      else if ((std:: isspace(c) && !inSingleQuotes && !inDoubleQuotes && !isbackslash)){
-        if (argumentStarted){
-          arguments.push_back(current);
-          current.clear();
-          argumentStarted = false;
-        }
-      }
-      else{
-        current += c;
-        argumentStarted = true;
-      }
-    }
-    if (argumentStarted) {
-    arguments.push_back(current);
-    }
-
-    if (arguments.empty()) {
-    continue;
-    }
-    
-    bool redirectOutput = false;
-    std::string outputFile;
-
-    for (size_t i = 0; i < arguments.size(); i++){
-      if (arguments[i] == ">" || arguments[i] == "1>"){
-        redirectOutput = true;
-
-        if (i + 1 < arguments.size()){
-          outputFile = arguments[i + 1];
-        }
-
-        arguments.resize(i);
-        break;
-      }
-    }
-    std::string command = arguments[0];
-
-    //Build-in Command
-
-    if (commands.contains(command)){
-      std::ofstream outFile;
-      std::streambuf* originalBuffer = nullptr;      
-      if (redirectOutput == true){
-        outFile.open(outputFile, std::ios::out | std::ios::trunc);
-
-        if (!outFile) {
-            std::cerr << "Cannot open output file: " << outputFile << "\n";
-            continue;
-        }
-
-        originalBuffer = std::cout.rdbuf(outFile.rdbuf());
-      }
-      if (command == "exit") {
-        break;
-      } 
-      else if (command == "echo") {
-        for (size_t i = 1; i < arguments.size(); i++){
-          if (i > 1){
-            std::cout << " ";
-          }
-          std::cout << arguments[i];
-        }
-        std::cout << std:: endl;
-      }
-      else if (command == "pwd"){
-        std::cout << std::filesystem::current_path().string() << std::endl;
-      }
-      else if (command == "cd"){
-        std::string target = arguments.size() > 1 ? arguments[1] : "";
-        std::error_code ec;
-        if (target == "~"){
-          const char* home = std::getenv("HOME");
-          std::filesystem::current_path(home, ec);         
-        }else{
-          std::filesystem::current_path(target, ec);
-        }
-        
-
-        if (ec) {
-            std::cout << "cd: " << target
-                      << ": No such file or directory\n";
-        }
-      }
-      //Command "type"
-      else {
-        std::string target = input.size() > 5 ? input.substr(5) : "";
-        bool find = false;
-        // Step 1: Check built-in commands
-        if (commands.contains(target)) {
-            std::cout << target << " is a shell builtin\n";
-        }
-        else{
-          while (std::getline(ss, directory, ':')) {
-            std::filesystem::path fullPath = std::filesystem:: path(directory)/target;
-            if (std::filesystem::is_regular_file(fullPath) && access(fullPath.c_str(), X_OK) == 0){
-              std::cout << target << " is " << fullPath.string() << std::endl;
-              find = true;
-              break;
-            }
-          }
-          if (find == false){
-            std:: cout << target << ": not found" << std::endl;
-          }
-        }
-      }
-
-      if (originalBuffer != nullptr) {
-        std::cout.flush();
-        std::cout.rdbuf(originalBuffer);
-        outFile.close();
-      }
-    }
-    //Not build-in command try excution
-    else {
-      bool find = false;
-      std::filesystem::path fullPath;
-      while (std::getline(ss, directory, ':')) {
-        fullPath = std::filesystem:: path(directory) / command;
-
-        if (std::filesystem::is_regular_file(fullPath) && access(fullPath.c_str(), X_OK) == 0){
-          find = true;
+      if (!std::getline(std::cin, input)) {
           break;
-        }
-
       }
-      if (find == false){
-        std::cout << input << ": command not found"<< std::endl;
+
+      Command cmd = parseCommand(input);
+
+      if (!cmd.error.empty()) {
+          std::cerr << cmd.error << "\n";
+          continue;
       }
-      else{
-        std::vector<char*> argv;
 
-        for(auto& arg : arguments){
-          argv.push_back(arg.data());
-        }
-
-        argv.push_back(nullptr);
-
-        pid_t  pid = fork();
-
-        if (pid == 0){
-          if (redirectOutput){
-
-            // Open the output file for writing.
-            // Create it if missing, overwrite if it exists.
-            int fd = open(
-                outputFile.c_str(),
-                O_WRONLY | O_CREAT | O_TRUNC,
-                0644
-            );
-
-            // Stop if opening the file failed.
-            if (fd == -1) {
-                perror("open");
-                _exit(1);
-            }
-
-            // Make standard output (FD 1) refer to the file.
-            if (dup2(fd, STDOUT_FILENO) == -1) {
-                perror("dup2");
-                close(fd);
-                _exit(1);
-            }
-
-            // The extra descriptor is no longer needed.
-            // FD 1 remains connected to the file.
-            close(fd);
-          }
-          execv(fullPath.c_str(), argv.data());
-
-          // Only runs if execv fails
-          perror("execv");
-          _exit(127);
-        }
-        else if (pid > 0){
-          waitpid(pid, nullptr, 0);
-        }
-        else{
-          perror("fork");
-        }
+      if (cmd.arguments.empty()) {
+          continue;
       }
-    }
+
+      const std::string& name = cmd.arguments[0];
+
+      if (name == "exit") {
+          break;
+      }
+
+      if (builtins.contains(name)) {
+          executeBuiltin(cmd);
+      }
+      else {
+          executeExternal(cmd);
+      }
   }
 
   return 0;
