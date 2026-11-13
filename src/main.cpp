@@ -21,6 +21,7 @@ struct Command {
   std::vector<std::string> arguments;
   std::optional<std::string> outputFile;
   std::string error;
+  int redirectFD = 1;
 };
 
 const std::unordered_set<std::string> builtins = {
@@ -34,6 +35,7 @@ Command parseCommand(const std::string& input) {
   struct Token {
       std::string text;
       bool isRedirect = false;
+      int redirectFd = 1;
   };
 
   std::vector<Token> tokens;
@@ -107,6 +109,7 @@ Command parseCommand(const std::string& input) {
 
           if (c == '1' || c == '2') {
               ++i;
+              tokens.redirectFd = c - '0';
           }
 
           tokens.push_back({">", true});
@@ -132,7 +135,7 @@ Command parseCommand(const std::string& input) {
               result.error = "Missing output filename";
               return result;
           }
-
+          result.redirectFD = tokens[i].redirectFd;
           result.outputFile = tokens[++i].text;
       }
       else {
@@ -289,7 +292,7 @@ void executeExternal(const Command& cmd) {
               _exit(1);
           }
 
-          if (dup2(fd, STDOUT_FILENO) == -1) {
+          if (dup2(fd, cmd.redirectFD) == -1) {
               perror("dup2");
               close(fd);
               _exit(1);
