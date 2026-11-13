@@ -103,17 +103,17 @@ Command parseCommand(const std::string& input) {
           finishToken();
       }
       else if (c == '>' ||
-                ((c == '1' || c == '2') && i + 1 < input.size() &&
-                input[i + 1] == '>' && !started)) {
-          finishToken();
+            ((c == '1' || c == '2') && i + 1 < input.size() &&
+            input[i + 1] == '>' && !started)) {
+        finishToken();
+        int redirectFd;
+        if (c == '1' || c == '2') {
+        redirectFd = c - '0';
+        ++i;
+        
+        }
 
-          if (c == '1' || c == '2') {
-            tokens[i].redirectFd = c - '0';
-            ++i;
-              
-          }
-
-          tokens.push_back({">", true});
+        tokens.push_back({">", true, redirectFd});
       }
       else {
           current += c;
