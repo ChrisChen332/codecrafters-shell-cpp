@@ -30,95 +30,95 @@ const std::unordered_set<std::string> builtins = {
 
 // Parse arguments, quotes, escapes, and stdout redirection.
 Command parseCommand(const std::string& input) {
-  Command result;
+    Command result;
 
-  struct Token {
-      std::string text;
-      bool isRedirect = false;
-      int redirectFd = 1;
-  };
+    struct Token {
+        std::string text;
+        bool isRedirect = false;
+        int redirectFd = 1;
+    };
 
-  std::vector<Token> tokens;
-  std::string current;
+    std::vector<Token> tokens;
+    std::string current;
 
-  bool started = false;
-  bool singleQuote = false;
-  bool doubleQuote = false;
+    bool started = false;
+    bool singleQuote = false;
+    bool doubleQuote = false;
 
-  auto finishToken = [&]() {
-      if (started) {
-          tokens.push_back({current, false});
-          current.clear();
-          started = false;
-      }
-  };
+    auto finishToken = [&]() {
+        if (started) {
+            tokens.push_back({current, false});
+            current.clear();
+            started = false;
+        }
+    };
 
-  for (size_t i = 0; i < input.size(); ++i) {
-      char c = input[i];
+    for (size_t i = 0; i < input.size(); ++i) {
+        char c = input[i];
 
-      // Single quotes preserve everything literally.
-      if (singleQuote) {
-          if (c == '\'') {
-              singleQuote = false;
-          } else {
-              current += c;
-          }
-          continue;
-      }
-
-      // Double quotes preserve spaces but allow certain escapes.
-      if (doubleQuote) {
-          if (c == '"') {
-              doubleQuote = false;
-          } else if (c == '\\' && i + 1 < input.size()) {
-              char next = input[i + 1];
-
-              if (next == '"' || next == '\\' ||
-                  next == '$' || next == '`') {
-                  current += next;
-                  ++i;
-              } else {
-                  current += c;
-              }
-          } else {
-              current += c;
-          }
-          continue;
-      }
-
-      // Outside quotes, backslash escapes the next character.
-      if (c == '\\' && i + 1 < input.size()) {
-          current += input[++i];
-          started = true;
-      }
-      else if (c == '\'') {
-          singleQuote = true;
-          started = true;
-      }
-      else if (c == '"') {
-          doubleQuote = true;
-          started = true;
-      }
-      else if (std::isspace(static_cast<unsigned char>(c))) {
-          finishToken();
-      }
-      else if (c == '>' ||
-            ((c == '1' || c == '2') && i + 1 < input.size() &&
-            input[i + 1] == '>' && !started)) {
-        finishToken();
-        int redirectFd;
-        if (c == '1' || c == '2') {
-        redirectFd = c - '0';
-        ++i;
-        
+        // Single quotes preserve everything literally.
+        if (singleQuote) {
+            if (c == '\'') {
+                singleQuote = false;
+            } else {
+                current += c;
+            }
+            continue;
         }
 
-        tokens.push_back({">", true, redirectFd});
-      }
-      else {
-          current += c;
-          started = true;
-      }
+        // Double quotes preserve spaces but allow certain escapes.
+        if (doubleQuote) {
+            if (c == '"') {
+                doubleQuote = false;
+            } else if (c == '\\' && i + 1 < input.size()) {
+                char next = input[i + 1];
+
+                if (next == '"' || next == '\\' ||
+                    next == '$' || next == '`') {
+                    current += next;
+                    ++i;
+                } else {
+                    current += c;
+                }
+            } else {
+                current += c;
+            }
+            continue;
+        }
+
+        // Outside quotes, backslash escapes the next character.
+        if (c == '\\' && i + 1 < input.size()) {
+            current += input[++i];
+            started = true;
+        }
+        else if (c == '\'') {
+            singleQuote = true;
+            started = true;
+        }
+        else if (c == '"') {
+            doubleQuote = true;
+            started = true;
+        }
+        else if (std::isspace(static_cast<unsigned char>(c))) {
+            finishToken();
+        }
+        else if (c == '>' ||
+            ((c == '1' || c == '2') && i + 1 < input.size() &&
+            input[i + 1] == '>' && !started)) {
+            finishToken();
+            int redirectFd = 1;
+            if (c == '1' || c == '2') {
+                redirectFd = c - '0';
+                ++i;
+                
+            }
+
+            tokens.push_back({">", true, redirectFd});
+        }
+        else {
+            current += c;
+            started = true;
+        }
   }
 
   if (singleQuote || doubleQuote) {
@@ -129,20 +129,20 @@ Command parseCommand(const std::string& input) {
   finishToken();
 
   // Separate command arguments from redirection syntax.
-  for (size_t i = 0; i < tokens.size(); ++i) {
-      if (tokens[i].isRedirect) {
-          if (i + 1 >= tokens.size() ||
-              tokens[i + 1].isRedirect) {
-              result.error = "Missing output filename";
-              return result;
-          }
-          result.redirectFD = tokens[i].redirectFd;
-          result.outputFile = tokens[++i].text;
-      }
-      else {
-          result.arguments.push_back(tokens[i].text);
-      }
-  }
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        if (tokens[i].isRedirect) {
+            if (i + 1 >= tokens.size() ||
+                tokens[i + 1].isRedirect) {
+                result.error = "Missing output filename";
+                return result;
+            }
+            result.redirectFD = tokens[i].redirectFd;
+            result.outputFile = tokens[++i].text;
+        }
+        else {
+        result.arguments.push_back(tokens[i].text);
+        }
+    }
 
   return result;
 }
@@ -177,83 +177,88 @@ std::optional<fs::path> findExecutable(
 
 // Execute a builtin in the parent shell process.
 void executeBuiltin(const Command& cmd) {
-  const auto& args = cmd.arguments;
-  const std::string& name = args[0];
+    const auto& args = cmd.arguments;
+    const std::string& name = args[0];
 
-  std::ofstream file;
-  std::ostream* output = &std::cout;
+    std::ofstream file;
+    std::ostream* output = &std::cout;
+    std::ostream* errorOutput = &std::cerr;
 
-  // Choose an output destination for this command only.
-  if (cmd.outputFile && cmd.redirectFD == 1) {
-      file.open(*cmd.outputFile, std::ios::out | std::ios::trunc);
+    // Choose an output destination for this command only.
+    if (cmd.outputFile) {
+    file.open(*cmd.outputFile, std::ios::out | std::ios::trunc);
 
-      if (!file) {
-          std::cerr << "Cannot open output file: "
+        if (!file) {
+            std::cerr << "Cannot open output file: "
                     << *cmd.outputFile << "\n";
-          return;
-      }
+            return;
+        }
 
-      output = &file;
-  }
+        if (cmd.redirectFD == 2) {
+            errorOutput = &file;
+        } else {
+            output = &file;
+        }
+    }
 
-  if (name == "echo") {
-      for (size_t i = 1; i < args.size(); ++i) {
-          if (i > 1) {
-              *output << " ";
-          }
+    if (name == "echo") {
+        for (size_t i = 1; i < args.size(); ++i) {
+            if (i > 1) {
+                *output << " ";
+            }
 
-          *output << args[i];
-      }
+            *output << args[i];
+        }
 
-      *output << "\n";
-  }
-  else if (name == "pwd") {
-      *output << fs::current_path().string() << "\n";
-  }
-  else if (name == "cd") {
-      std::string target = args.size() > 1 ? args[1] : "~";
+        *output << "\n";
+    }
+    else if (name == "pwd") {
+        *output << fs::current_path().string() << "\n";
+    }
+    else if (name == "cd") {
+        std::string target = args.size() > 1 ? args[1] : "~";
 
-      if (target == "~") {
-          const char* home = std::getenv("HOME");
+        if (target == "~") {
+            const char* home = std::getenv("HOME");
 
-          if (home == nullptr) {
-              std::cerr << "cd: HOME not set\n";
-              return;
-          }
+            if (home == nullptr) {
+                *errorOutput << "cd: HOME not set\n";
+                return;
+            }
 
-          target = home;
-      }
+            target = home;
+        }
 
-      std::error_code ec;
-      fs::current_path(target, ec);
+        std::error_code ec;
+        fs::current_path(target, ec);
 
-      if (ec) {
-          std::cerr << "cd: " << target
+        if (ec) {
+            *errorOutput << "cd: " << target
                     << ": No such file or directory\n";
-      }
-  }
-  else if (name == "type") {
-      if (args.size() < 2) {
-          return;
-      }
+        }
+    }
+    else if (name == "type") {
+        if (args.size() < 2) {
+            return;
+        }
 
-      const std::string& target = args[1];
+        const std::string& target = args[1];
 
-      if (builtins.contains(target)) {
-          *output << target << " is a shell builtin\n";
-      }
-      else {
-          auto path = findExecutable(target);
+        if (builtins.contains(target)) {
+            *output << target << " is a shell builtin\n";
+        }
+        else {
+            auto path = findExecutable(target);
 
-          if (path) {
-              *output << target << " is "
-                      << path->string() << "\n";
-          }
-          else {
-              *output << target << ": not found\n";
-          }
-      }
-  }
+            if (path) {
+                *output << target << " is "
+                        << path->string() << "\n";
+            }
+            else {
+                *errorOutput << target << ": not found\n";
+            }
+        }
+    }
 }
 
 // Run an external executable in a child process.
