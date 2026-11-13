@@ -184,7 +184,7 @@ void executeBuiltin(const Command& cmd) {
   std::ostream* output = &std::cout;
 
   // Choose an output destination for this command only.
-  if (cmd.outputFile) {
+  if (cmd.outputFile && cmd.redirectFD == 1) {
       file.open(*cmd.outputFile, std::ios::out | std::ios::trunc);
 
       if (!file) {
