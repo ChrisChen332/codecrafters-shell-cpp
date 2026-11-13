@@ -108,8 +108,9 @@ Command parseCommand(const std::string& input) {
           finishToken();
 
           if (c == '1' || c == '2') {
-              ++i;
-              tokens.redirectFd = c - '0';
+            tokens[i].redirectFd = c - '0';
+            ++i;
+              
           }
 
           tokens.push_back({">", true});
