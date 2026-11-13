@@ -105,7 +105,7 @@ Command parseCommand(const std::string& input) {
                 input[i + 1] == '>' && !started)) {
           finishToken();
 
-          if (c == '1') {
+          if (c == '1' || c == '2') {
               ++i;
           }
 
