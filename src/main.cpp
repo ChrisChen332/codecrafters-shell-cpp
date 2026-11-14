@@ -143,8 +143,9 @@ Command parseCommand(const std::string& input) {
                 return result;
             }
             result.redirectFD = tokens[i].redirectFd;
-            result.outputFile = tokens[++i].text;
             result.append = (tokens[i].text == ">>");
+            result.outputFile = tokens[++i].text;
+           
         }
         else {
             result.arguments.push_back(tokens[i].text);
@@ -193,7 +194,7 @@ void executeBuiltin(const Command& cmd) {
 
     // Choose an output destination for this command only.
     if (cmd.outputFile) {
-    file.open(*cmd.outputFile, std::ios::out | cmd.append? std::ios::app : std::ios::trunc);
+    file.open(*cmd.outputFile, std::ios::out | (cmd.append? std::ios::app : std::ios::trunc));
 
         if (!file) {
             std::cerr << "Cannot open output file: "
