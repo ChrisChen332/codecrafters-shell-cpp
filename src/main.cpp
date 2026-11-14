@@ -296,10 +296,10 @@ void executeExternal(const Command& cmd) {
         if (cmd.outputFile) {
             int flags = O_WRONLY | O_CREAT;
             if (cmd.append) {
-                flags | = O_APPEND
+                flags |= O_APPEND
             }
             else{
-                flags | = O_TRUNC
+                flags |= O_TRUNC
             }
             int fd = open(
                 cmd.outputFile->c_str(),
