@@ -18,10 +18,11 @@ namespace fs = std::filesystem;
 
 // Holds the result of parsing one command line.
 struct Command {
-  std::vector<std::string> arguments;
-  std::optional<std::string> outputFile;
-  std::string error;
-  int redirectFD = 1;
+    std::vector<std::string> arguments;
+    std::optional<std::string> outputFile;
+    std::string error;
+    bool append = false;
+    int redirectFD = 1;
 };
 
 const std::unordered_set<std::string> builtins = {
@@ -110,10 +111,15 @@ Command parseCommand(const std::string& input) {
             if (c == '1' || c == '2') {
                 redirectFd = c - '0';
                 ++i;
-                
+            }
+            bool append = false;
+
+            if (i + 1 < input.size() && input[i + 1] == '>') {
+                append = true;
+                ++i;
             }
 
-            tokens.push_back({">", true, redirectFd});
+            tokens.push_back({append ? ">>" : ">", true, redirectFd});
         }
         else {
             current += c;
@@ -138,9 +144,10 @@ Command parseCommand(const std::string& input) {
             }
             result.redirectFD = tokens[i].redirectFd;
             result.outputFile = tokens[++i].text;
+            result.append = (tokens[i].text == ">>")
         }
         else {
-        result.arguments.push_back(tokens[i].text);
+            result.arguments.push_back(tokens[i].text);
         }
     }
 
@@ -186,7 +193,7 @@ void executeBuiltin(const Command& cmd) {
 
     // Choose an output destination for this command only.
     if (cmd.outputFile) {
-    file.open(*cmd.outputFile, std::ios::out | std::ios::trunc);
+    file.open(*cmd.outputFile, std::ios::out | cmd.append? std::ios::app : std::ios::trunc);
 
         if (!file) {
             std::cerr << "Cannot open output file: "
@@ -263,62 +270,69 @@ void executeBuiltin(const Command& cmd) {
 
 // Run an external executable in a child process.
 void executeExternal(const Command& cmd) {
-  std::string name = cmd.arguments[0];
+    std::string name = cmd.arguments[0];
 
-  auto fullPath = findExecutable(name);
+    auto fullPath = findExecutable(name);
 
-  if (!fullPath) {
-      std::cerr << name << ": command not found\n";
-      return;
-  }
+    if (!fullPath) {
+        std::cerr << name << ": command not found\n";
+        return;
+    }
 
-  // execv expects an array of C-style string pointers.
-  std::vector<std::string> args = cmd.arguments;
-  std::vector<char*> argv;
+    // execv expects an array of C-style string pointers.
+    std::vector<std::string> args = cmd.arguments;
+    std::vector<char*> argv;
 
-  for (auto& arg : args) {
-      argv.push_back(arg.data());
-  }
+    for (auto& arg : args) {
+        argv.push_back(arg.data());
+    }
 
-  argv.push_back(nullptr);
+    argv.push_back(nullptr);
 
-  pid_t pid = fork();
+    pid_t pid = fork();
 
-  if (pid == 0) {
-      // Child: redirect stdout before replacing the process.
-      if (cmd.outputFile) {
-          int fd = open(
-              cmd.outputFile->c_str(),
-              O_WRONLY | O_CREAT | O_TRUNC,
-              0644
-          );
+    if (pid == 0) {
+        // Child: redirect stdout before replacing the process.
+        if (cmd.outputFile) {
+            int flags = O_WRONLY | O_CREAT;
+            if (cmd.append) {
+                flags | = O_APPEND
+            }
+            else{
+                flags | = O_TRUNC
+            }
+            int fd = open(
+                cmd.outputFile->c_str(),
+                flags,
+                0644
+            );
 
-          if (fd == -1) {
-              perror("open");
-              _exit(1);
-          }
+            if (fd == -1) {
+                perror("open");
+                _exit(1);
+            }
 
-          if (dup2(fd, cmd.redirectFD) == -1) {
-              perror("dup2");
-              close(fd);
-              _exit(1);
-          }
+            if (dup2(fd, cmd.redirectFD) == -1) {
+                perror("dup2");
+                close(fd);
+                _exit(1);
+            }
 
-          close(fd);
-      }
+            close(fd);
+        }
 
-      execv(fullPath->c_str(), argv.data());
+        execv(fullPath->c_str(), argv.data());
 
-      perror("execv");
-      _exit(127);
-  }
-  else if (pid > 0) {
-      // Parent waits for the foreground command.
-      waitpid(pid, nullptr, 0);
-  }
-  else {
-      perror("fork");
-  }
+        perror("execv");
+        _exit(127);
+    }
+    else if (pid > 0) {
+        // Parent waits for the foreground command.
+        waitpid(pid, nullptr, 0);
+    }
+    else {
+        perror("fork");
+    }
 }
 
 int main() {
