@@ -144,7 +144,7 @@ Command parseCommand(const std::string& input) {
             }
             result.redirectFD = tokens[i].redirectFd;
             result.outputFile = tokens[++i].text;
-            result.append = (tokens[i].text == ">>")
+            result.append = (tokens[i].text == ">>");
         }
         else {
             result.arguments.push_back(tokens[i].text);
