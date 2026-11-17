@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -53,7 +52,18 @@ std::string readLine() {
         }
 
         if (c == '\t') {
-            // Filename completion goes here
+            size_t pos = input.find_last_of(" \t");
+
+            std::string prefix = input.substr(pos + 1);
+
+            auto match = completeFilename(prefix);
+
+            if (match) {
+                std::string suffix = match -> substr(prefix.size()) + " ";
+
+                input += suffix;
+                std::cout << suffix;
+            }
         }
         else if (c == 127 || c == '\b') {
             if (!input.empty()) {
@@ -401,9 +411,7 @@ int main() {
 
       std::string input;
 
-      if (!std::getline(std::cin, input)) {
-          break;
-      }
+      input = readLine();
 
       Command cmd = parseCommand(input);
 
