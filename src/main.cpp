@@ -13,8 +13,64 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <termios.h>
 
 namespace fs = std::filesystem;
+
+std::optional<std::string> completeFilename(const std::string& prefix) {
+    for (const auto& entry : fs::directory_iterator(fs::current_path())) {
+        if (!entry.is_regular_file()) {
+            continue;
+        }
+
+        std::string filename = entry.path().filename().string();
+
+        if (filename.starts_with(prefix)) {
+            return filename;
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::string readLine() {
+    termios original;
+    tcgetattr(STDIN_FILENO, &original);
+
+    termios raw = original;
+    
+    raw.c_lflag &= ~(ICANON | ECHO);
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+
+    std::string input;
+    char c;
+
+    while (read(STDIN_FILENO, &c, 1) == 1) {
+        if (c == '\n' || c == '\r') {
+            std::cout << "\n";
+            break;
+        }
+
+        if (c == '\t') {
+            // Filename completion goes here
+        }
+        else if (c == 127 || c == '\b') {
+            if (!input.empty()) {
+                input.pop_back();
+                std::cout << "\b \b";
+            }
+        }
+        else {
+            input += c;
+            std::cout << c;
+        }
+    }
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &original);
+
+    return input;
+}
 
 // Holds the result of parsing one command line.
 struct Command {
