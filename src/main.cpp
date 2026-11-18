@@ -17,7 +17,7 @@
 namespace fs = std::filesystem;
 
 std::optional<std::string> completeFilename(const std::string& prefix) {
-    size_t pos = prefix.find_last_of("\\");
+    size_t pos = prefix.find_last_of("/");
     std::string f_path = prefix.substr(pos);
     std::string w_prefix = prefix.substr(pos, prefix.size() - 1);
     fs::path path = fs::current_path();
