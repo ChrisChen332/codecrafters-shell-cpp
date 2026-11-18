@@ -17,18 +17,24 @@
 namespace fs = std::filesystem;
 
 std::optional<std::string> completeFilename(const std::string& prefix) {
-    for (const auto& entry : fs::directory_iterator(fs::current_path())) {
+    size_t pos = prefix.find_last_of("\\");
+    std::string f_path = prefix.substr(pos);
+    std::string w_prefix = prefix.substr(pos, prefix.size);
+    fs::path path = fs::current_path();
+    if (f_path.empty()){
+        path = f_path;
+    } 
+    for (const auto& entry : fs::directory_iterator(path)) {
         if (!entry.is_regular_file()) {
             continue;
         }
 
         std::string filename = entry.path().filename().string();
 
-        if (filename.starts_with(prefix)) {
+        if (filename.starts_with(w_prefix)) {
             return filename;
         }
-    }
-
+    } 
     return std::nullopt;
 }
 
