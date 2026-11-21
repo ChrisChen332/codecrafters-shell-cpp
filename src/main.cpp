@@ -19,9 +19,9 @@ namespace fs = std::filesystem;
 std::optional<std::string> completeFilename(const std::string& prefix) {
     size_t pos = prefix.find_last_of("/");
     std::string f_path = prefix.substr(pos);
-    std::string w_prefix = prefix.substr(pos, prefix.size());
+    std::string w_prefix = prefix.substr(pos + 1, prefix.size());
     fs::path path = fs::current_path();
-    if (f_path.empty()){
+    if (!f_path.empty()){
         path = f_path;
     } 
     for (const auto& entry : fs::directory_iterator(path)) {
