@@ -74,6 +74,9 @@ std::string readLine() {
                 input += suffix;
                 std::cout << suffix;
             }
+            else {
+                std::cout << '\x07';
+            }
         }
         else if (c == 127 || c == '\b') {
             if (!input.empty()) {
