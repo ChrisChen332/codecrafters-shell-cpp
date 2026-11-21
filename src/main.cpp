@@ -25,14 +25,18 @@ std::optional<std::string> completeFilename(const std::string& prefix) {
         path = f_path;
     } 
     for (const auto& entry : fs::directory_iterator(path)) {
-        if (!entry.is_regular_file()) {
-            continue;
-        }
 
-        std::string filename = entry.path().filename().string();
-
-        if (filename.starts_with(w_prefix)) {
-            return f_path + filename;
+        std::string name = entry.path().filename().string();
+        
+        if (name.starts_with(w_prefix)) {
+            std::string full_path = f_path + name;
+            if (entry.is_directory()){
+                full_path += "/";
+            }
+            else{
+                full_path += " ";
+            }
+            return full_path;
         }
     } 
     return std::nullopt;
@@ -65,7 +69,7 @@ std::string readLine() {
             auto match = completeFilename(prefix);
 
             if (match) {
-                std::string suffix = match -> substr(prefix.size()) + " ";
+                std::string suffix = match -> substr(prefix.size());
 
                 input += suffix;
                 std::cout << suffix;
