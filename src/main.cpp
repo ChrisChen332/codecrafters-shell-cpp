@@ -32,7 +32,7 @@ std::optional<std::string> completeFilename(const std::string& prefix) {
         std::string filename = entry.path().filename().string();
 
         if (filename.starts_with(w_prefix)) {
-            return filename;
+            return f_path + filename;
         }
     } 
     return std::nullopt;
