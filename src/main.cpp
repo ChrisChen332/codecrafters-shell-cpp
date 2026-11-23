@@ -105,6 +105,7 @@ std::string readLine() {
                     }
 
                     std::cout << "\n$ " << input;
+                    tabCount = 0;
                 }
             }
         }
