@@ -62,9 +62,9 @@ std::string readLine() {
 
     std::string input;
     char c;
-    
+    int tabCount = 0;
     while (read(STDIN_FILENO, &c, 1) == 1) {
-        int tabCount = 0;
+        
         if (c == '\n' || c == '\r') {
             std::cout << "\n";
             break;
