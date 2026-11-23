@@ -69,10 +69,11 @@ std::string readLine() {
         }
 
         if (c == '\t') {
+            
             size_t pos = input.find_last_of(" \t");
 
             std::string prefix = input.substr(pos + 1);
-
+            int tabCount = 0;
             auto match = completeFilename(prefix);
             if (matches.empty()) {
                 std::cout << '\x07';
