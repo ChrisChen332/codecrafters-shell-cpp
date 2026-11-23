@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <termios.h>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 
