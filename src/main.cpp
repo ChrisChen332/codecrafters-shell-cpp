@@ -24,22 +24,29 @@ std::optional<std::string> completeFilename(const std::string& prefix) {
     if (!f_path.empty()){
         path = f_path;
     } 
+    std::vector<std::string> matches;
     for (const auto& entry : fs::directory_iterator(path)) {
 
         std::string name = entry.path().filename().string();
         
         if (name.starts_with(w_prefix)) {
             std::string full_path = f_path + name;
-            if (entry.is_directory()){
+            if (entry.is_directory()) {
                 full_path += "/";
             }
-            else{
+            else if (entry.is_regular_file()) {
                 full_path += " ";
             }
-            return full_path;
+            else {
+                continue;
+            }
+
+            matches.push_back(full_path);
         }
     } 
-    return std::nullopt;
+    std::sort(matches.begin(), matches.end());
+
+    return matches;
 }
 
 std::string readLine() {
@@ -67,15 +74,35 @@ std::string readLine() {
             std::string prefix = input.substr(pos + 1);
 
             auto match = completeFilename(prefix);
-
-            if (match) {
-                std::string suffix = match -> substr(prefix.size());
+            if (matches.empty()) {
+                std::cout << '\x07';
+                tabCount = 0;
+            }
+            else if (matches.size() == 1) {
+                // Only one match: complete immediately
+                std::string suffix = matches[0].substr(prefix.size());
 
                 input += suffix;
                 std::cout << suffix;
+
+                tabCount = 0;
             }
             else {
-                std::cout << '\x07';
+                // Multiple matches
+                ++tabCount;
+
+                if (tabCount == 1) {
+                    std::cout << '\x07';
+                }
+                else {
+                    std::cout << "\n";
+
+                    for (const auto& match : matches) {
+                        std::cout << match << "  ";
+                    }
+
+                    std::cout << "\n$ " << input;
+                }
             }
         }
         else if (c == 127 || c == '\b') {
