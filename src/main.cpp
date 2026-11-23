@@ -61,8 +61,9 @@ std::string readLine() {
 
     std::string input;
     char c;
-
+    
     while (read(STDIN_FILENO, &c, 1) == 1) {
+        int tabCount = 0;
         if (c == '\n' || c == '\r') {
             std::cout << "\n";
             break;
@@ -73,7 +74,7 @@ std::string readLine() {
             size_t pos = input.find_last_of(" \t");
 
             std::string prefix = input.substr(pos + 1);
-            int tabCount = 0;
+            
             auto matches = completeFilename(prefix);
             if (matches.empty()) {
                 std::cout << '\x07';
