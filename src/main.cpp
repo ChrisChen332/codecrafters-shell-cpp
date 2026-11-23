@@ -74,7 +74,7 @@ std::string readLine() {
 
             std::string prefix = input.substr(pos + 1);
             int tabCount = 0;
-            auto match = completeFilename(prefix);
+            auto matches = completeFilename(prefix);
             if (matches.empty()) {
                 std::cout << '\x07';
                 tabCount = 0;
