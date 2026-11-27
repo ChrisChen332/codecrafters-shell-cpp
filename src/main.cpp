@@ -98,7 +98,7 @@ std::string readLine() {
                 for (const auto& match : matches){
                     if (prefix.length() > match.length() - prefix.length()){
                         isLCPlarger = true;
-                        lcpMatch = match
+                        lcpMatch = match;
                     }
                 }
                 if (isLCPlarger == true){
