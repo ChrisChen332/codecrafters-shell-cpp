@@ -99,6 +99,7 @@ std::string readLine() {
                     if (prefix.length() > match.length() - prefix.length()){
                         isLCPlarger = true;
                         lcpMatch = match;
+                        break;
                     }
                 }
                 if (isLCPlarger == true){
@@ -109,7 +110,7 @@ std::string readLine() {
 
                     tabCount = 0;
                 }
-                if (tabCount == 1) {
+                else if (tabCount == 1) {
                     std::cout << '\x07';
                 }
                 else {
