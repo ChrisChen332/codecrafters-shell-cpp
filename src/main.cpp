@@ -93,7 +93,22 @@ std::string readLine() {
             else {
                 // Multiple matches
                 ++tabCount;
+                bool isLCPlarger = false;
+                std:: string lcpMatch;
+                for (const auto& match : matches){
+                    if (prefix.length() > match.length() - prefix.length()){
+                        isLCPlarger = true;
+                        lcpMatch = match
+                    }
+                }
+                if (isLCPlarger == true){
+                    std::string suffix = lcpMatch.substr(prefix.size());
 
+                    input += suffix;
+                    std::cout << suffix;
+
+                    tabCount = 0;
+                }
                 if (tabCount == 1) {
                     std::cout << '\x07';
                 }
