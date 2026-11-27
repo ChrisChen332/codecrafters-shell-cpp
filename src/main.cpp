@@ -101,14 +101,19 @@ std::string readLine() {
                 }
 
                 for (size_t i = 0; i < limit; i++){
+                    bool mismatch = false;
                     char targetChar = matches[0][i];
                     for (const auto& match : matches){
                         if (match[i] == targetChar){
                             continue;
                         } else{
                             lcpNum = i;
+                            mismatch = true;
                             break;
                         }
+                    }
+                    if (mismatch){
+                        break;
                     }
                 }
                 if (lcpNum + 1 > prefix.size()){
