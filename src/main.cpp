@@ -104,10 +104,7 @@ std::string readLine() {
                     bool mismatch = false;
                     char targetChar = matches[0][i];
                     for (const auto& match : matches){
-                        if (match[i] == targetChar){
-                            continue;
-                        } else{
-                            lcpNum = i;
+                        if (match[i] != targetChar){
                             mismatch = true;
                             break;
                         }
@@ -115,6 +112,7 @@ std::string readLine() {
                     if (mismatch){
                         break;
                     }
+                    ++lcpNum;
                 }
                 if (lcpNum + 1 > prefix.size()){
                     std::string suffix = matches[0].substr(lcpNum);
