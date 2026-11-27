@@ -114,8 +114,8 @@ std::string readLine() {
                     }
                     ++lcpNum;
                 }
-                if (lcpNum + 1 > prefix.size()){
-                    std::string suffix = matches[0].substr(lcpNum);
+                if (lcpNum > prefix.size()){
+                    std::string suffix = matches.front().substr(prefix.size(), lcpNum - prefix.size());
 
                     input += suffix;
                     std::cout << suffix;
