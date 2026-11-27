@@ -93,17 +93,26 @@ std::string readLine() {
             else {
                 // Multiple matches
                 ++tabCount;
-                bool isLCPlarger = false;
-                std:: string lcpMatch;
-                for (const auto& match : matches){
-                    if (prefix.length() > match.length() - prefix.length()){
-                        isLCPlarger = true;
-                        lcpMatch = match;
-                        break;
+                int lcpNum = 0;
+                size_t limit = matches.front().size() - 1;
+
+                for (const auto& match : matches) {
+                    limit = std::min(limit, match.size() - 1);
+                }
+
+                for (size_t i = 0; i < limit; i++){
+                    char targetChar = matches[0][i];
+                    for (const auto& match : matches){
+                        if (match[i] == targetChar){
+                            continue;
+                        } else{
+                            lcpNum = i;
+                            break;
+                        }
                     }
                 }
-                if (isLCPlarger == true){
-                    std::string suffix = lcpMatch.substr(prefix.size());
+                if (lcpNum + 1 > prefix.size()){
+                    std::string suffix = matches[0].substr(lcpNum);
 
                     input += suffix;
                     std::cout << suffix;
